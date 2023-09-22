@@ -1,3 +1,5 @@
+import { PostMessageUseCase, PostMessageCommand, Message, MessageRepository, DateProvider } from "../post-message.usecase";
+
 describe("Feature: Posting a message", () => {
     describe("Rule: A message can contain up to 280 characters", () => {
         test("Alice can post a message on her timeline", () => {
@@ -9,7 +11,7 @@ describe("Feature: Posting a message", () => {
                 author: "Alice"
             })
 
-            thenpostedmessageShouldBe({
+            thenPostedMessageShouldBe({
                 id: "message-id",
                 text: "Hello world!",
                 author: "Alice",
@@ -19,30 +21,40 @@ describe("Feature: Posting a message", () => {
     });
 });
 
-let message: { id: string; text: string; author: string; publishedAt: Date; }
+
+let message: Message;
 let now: Date;
 
-const givenNowIs = (_now: Date) => {
-    now = _now;
-};
-const whenUserPostsMessage = (postMessageCommand: {
-    id: string;
-    text: string;
-    author: string;
-}) => {
-    message = {
-        id: postMessageCommand.id,
-        text: postMessageCommand.text,
-        author: postMessageCommand.author,
-        publishedAt: now
+class InMemoryMessageRepository implements MessageRepository {
+    save(msg: Message): void {
+        message = msg;
     }
+}
+
+class StubDateProvider implements DateProvider {
+    now: Date;
+    getNow(): Date {
+        return this.now;
+    }
+}
+const messageRepository = new InMemoryMessageRepository();
+const dateProvider = new StubDateProvider();
+
+const postMessageUseCase = new PostMessageUseCase(
+    messageRepository,
+    dateProvider,
+);
+
+const givenNowIs = (_now: Date) => {
+    dateProvider.now = _now;
 };
-const thenpostedmessageShouldBe = (expectedMessage: {
-    id: string;
-    text: string;
-    author: string;
-    publishedAt: Date;
-}) => {
+
+
+function whenUserPostsMessage(postMessageCommand: PostMessageCommand) {
+    postMessageUseCase.handle(postMessageCommand);
+};
+
+const thenPostedMessageShouldBe = (expectedMessage: Message) => {
     expect(expectedMessage).toEqual(message);
 
 }
