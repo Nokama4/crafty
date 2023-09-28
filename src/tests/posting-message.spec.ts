@@ -1,4 +1,5 @@
-import { PostMessageUseCase, PostMessageCommand, Message, MessageRepository, DateProvider, MessageTooLongError, EmptyMessageError } from "../post-message.usecase";
+import { PostMessageUseCase, PostMessageCommand, Message, DateProvider, MessageTooLongError, EmptyMessageError } from "../post-message.usecase";
+import { InMemoryMessageRepository } from "../message.inmemory.repository";
 
 describe("Feature: Posting a message", () => {
     let fixture: Fixture;
@@ -52,7 +53,7 @@ describe("Feature: Posting a message", () => {
             fixture.givenNowIs(new Date("2020-08-01T09:00:00.000Z"));
             fixture.whenUserPostsMessage({
                 id: "message-id",
-                text: "",
+                text: "  ",
                 author: "Alice"
             });
             fixture.thenErrorShouldBe(EmptyMessageError);
@@ -64,12 +65,6 @@ describe("Feature: Posting a message", () => {
 
 
 
-class InMemoryMessageRepository implements MessageRepository {
-    message: Message;
-    save(msg: Message): void {
-        this.message = msg;
-    }
-}
 
 class StubDateProvider implements DateProvider {
     now: Date;
@@ -88,8 +83,8 @@ const createFixture = () => {
     let thrownError: Error;
 
     return {
-        givenNowIs(_now: Date) {
-            dateProvider.now = _now;
+        givenNowIs(now: Date) {
+            dateProvider.now = now;
         },
         whenUserPostsMessage(postMessageCommand: PostMessageCommand) {
             try {
